@@ -1,0 +1,73 @@
+/* Custom Global Styles */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+body {
+    font-family: 'Inter', sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+/* Deep, dynamic animated background */
+.background-anim {
+    background: radial-gradient(circle at 15% 50%, rgba(30, 27, 75, 1) 0%, rgba(17, 24, 39, 1) 50%, rgba(0, 0, 0, 1) 100%);
+    background-size: 200% 200%;
+    animation: bg-shift 15s ease infinite;
+}
+
+@keyframes bg-shift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* Premium Glassmorphism Utility */
+.glass-panel {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+}
+
+/* Video Styling */
+.mirror {
+    transform: scaleX(-1); /* Mirrors local camera horizontally */
+}
+
+/* Dynamic Grid Layouts depending on number of child elements */
+#video-grid {
+    transition: all 0.3s ease;
+}
+
+/* 1 Video (Local only) */
+#video-grid:has(> :nth-last-child(1):first-child) {
+    grid-template-columns: 1fr;
+}
+
+/* 2 Videos (1-to-1 Private Call) */
+#video-grid:has(> :nth-last-child(2):first-child) {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+/* 3 to 4 Videos */
+#video-grid:has(> :nth-last-child(n+3):first-child):has(> :nth-last-child(-n+4):first-child) {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+/* 5+ Videos (Group Call) */
+#video-grid:has(> :nth-last-child(n+5):first-child) {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+    #video-grid:has(> :nth-last-child(2):first-child) {
+        grid-template-columns: 1fr;
+        grid-template-rows: 1fr 1fr; /* Stack on mobile */
+    }
+}
+
+/* Controls active/inactive states */
+.control-btn.muted {
+    background-color: rgba(239, 68, 68, 0.2); /* Red tint */
+    color: #ef4444; /* Tailwind red-500 */
+    border: 1px solid rgba(239, 68, 68, 0.5);
+}
