@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus Stream | Premium Video Calling</title>
+    <!-- Tailwind CSS for rapid styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Phosphor Icons for premium UI icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- PeerJS for WebRTC wrapper -->
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-gray-900 text-white h-screen w-screen overflow-hidden font-sans selection:bg-indigo-500">
+
+    <!-- Background Animation Layer -->
+    <div class="background-anim absolute inset-0 z-0"></div>
+
+    <!-- MAIN APP CONTAINER -->
+    <div class="relative z-10 h-full w-full flex flex-col items-center justify-center p-4">
+
+        <!-- 1. DASHBOARD / LOBBY SCREEN -->
+        <div id="lobby-screen" class="glass-panel w-full max-w-md p-8 rounded-3xl shadow-2xl transition-all duration-500">
+            <h1 class="text-3xl font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400 text-center">Nexus Stream</h1>
+            <p class="text-gray-400 text-sm text-center mb-8">Secure, Peer-to-Peer Communication</p>
+
+            <div class="space-y-6">
+                <!-- User ID Section -->
+                <div class="bg-black/40 p-4 rounded-2xl border border-white/10">
+                    <p class="text-xs text-gray-400 mb-1 uppercase tracking-wider">Your Unique ID</p>
+                    <div class="flex items-center justify-between">
+                        <span id="my-id" class="text-lg font-mono text-indigo-300 font-semibold truncate select-all">Generating...</span>
+                        <button onclick="copyMyId()" class="p-2 hover:bg-white/10 rounded-lg transition" title="Copy ID">
+                            <i class="ph ph-copy text-xl"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Connect Section -->
+                <div>
+                    <label class="text-xs text-gray-400 mb-2 block uppercase tracking-wider">Connect to Peer</label>
+                    <input type="text" id="target-id" placeholder="Enter Peer ID..." class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition mb-3">
+                    
+                    <div class="flex gap-3">
+                        <button onclick="startPrivateCall()" class="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold py-3 rounded-xl shadow-lg shadow-indigo-500/30 transition-all flex items-center justify-center gap-2">
+                            <i class="ph-fill ph-phone-call text-xl"></i> Private Call
+                        </button>
+                        <button onclick="startGroupCall()" class="flex-1 bg-white/10 hover:bg-white/20 border border-white/10 text-white font-semibold py-3 rounded-xl transition-all flex items-center justify-center gap-2">
+                            <i class="ph-fill ph-users text-xl"></i> Group Call
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. ACTIVE CALL SCREEN (Hidden by default) -->
+        <div id="call-screen" class="hidden w-full h-full flex-col relative">
+            
+            <!-- Video Grid (Dynamic based on participants) -->
+            <div id="video-grid" class="flex-1 w-full h-full grid gap-4 p-4 auto-rows-fr">
+                <!-- Local Video (Self) -->
+                <div class="relative w-full h-full rounded-3xl overflow-hidden bg-black/50 shadow-2xl border border-white/5">
+                    <video id="local-video" autoplay muted playsinline class="w-full h-full object-cover mirror"></video>
+                    <div class="absolute bottom-4 left-4 bg-black/60 backdrop-blur-md px-3 py-1 rounded-lg text-sm text-white flex items-center gap-2">
+                        <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div> You
+                    </div>
+                </div>
+                <!-- Remote Videos will be injected here dynamically -->
+            </div>
+
+            <!-- Floating Control Bar -->
+            <div class="absolute bottom-8 left-1/2 -translate-x-1/2 glass-panel px-6 py-4 rounded-full flex items-center gap-6 shadow-2xl border border-white/10">
+                <button id="btn-mic" onclick="toggleMic()" class="control-btn bg-white/10 hover:bg-white/20 text-white p-4 rounded-full transition-all">
+                    <i class="ph-fill ph-microphone text-2xl"></i>
+                </button>
+                <button id="btn-cam" onclick="toggleCam()" class="control-btn bg-white/10 hover:bg-white/20 text-white p-4 rounded-full transition-all">
+                    <i class="ph-fill ph-video-camera text-2xl"></i>
+                </button>
+                <button id="btn-screen" onclick="toggleScreenShare()" class="control-btn bg-white/10 hover:bg-white/20 text-white p-4 rounded-full transition-all hidden md:block">
+                    <i class="ph-fill ph-screencast text-2xl"></i>
+                </button>
+                <button onclick="endCall()" class="control-btn bg-red-500 hover:bg-red-400 text-white p-4 rounded-full shadow-lg shadow-red-500/40 transition-all">
+                    <i class="ph-fill ph-phone-disconnect text-2xl"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Incoming Call Overlay -->
+        <div id="incoming-call-modal" class="hidden absolute inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center">
+            <div class="glass-panel p-8 rounded-3xl text-center max-w-sm w-full border border-white/10">
+                <div class="w-20 h-20 bg-indigo-500/20 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
+                    <i class="ph-fill ph-phone-ringing text-4xl text-indigo-400"></i>
+                </div>
+                <h2 class="text-2xl font-bold mb-2">Incoming Call</h2>
+                <p class="text-gray-400 mb-8 truncate" id="caller-id-display">ID: ...</p>
+                
+                <div class="flex gap-4">
+                    <button onclick="rejectCall()" class="flex-1 bg-red-500/20 hover:bg-red-500 text-red-500 hover:text-white border border-red-500 py-3 rounded-xl transition-all">Reject</button>
+                    <button onclick="answerCall()" class="flex-1 bg-green-500 hover:bg-green-400 text-white font-bold py-3 rounded-xl shadow-lg shadow-green-500/30 transition-all">Accept</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed top-4 right-4 translate-x-full transition-transform duration-300 z-50 glass-panel px-4 py-3 rounded-xl border border-white/10 flex items-center gap-3">
+        <i class="ph-fill ph-info text-indigo-400 text-xl"></i>
+        <span id="toast-msg" class="text-sm">Notification</span>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
